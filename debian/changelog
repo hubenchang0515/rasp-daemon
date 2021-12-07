@@ -1,0 +1,6 @@
+rasptool (daemon) UNRELEASED; urgency=low
+
+  * Initial release. Closes: #nnnn
+    <nnnn is the bug number of your ITP>
+
+ -- PlanC <hubenchang0515@outlook.com>  Mon, 06 Dec 2021 19:39:29 +0800
