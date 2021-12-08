@@ -6,8 +6,19 @@
 class Hello
 {
 public:
-    Hello();
-    ~Hello();
+    Hello()
+    {
+        m_interface.exportMethod(RASP_WARP_NAME(hello));
+        m_object.exportInterface(m_interface);
+        m_service.exportObject(m_object);
+
+        Rasp::DBus::Service::registerService(&m_service);
+    }
+
+    ~Hello()
+    {
+        Rasp::DBus::Service::unregisterService(&m_service);
+    }
 
     /*****************************************************************************
      * @brief 回调函数，DBus 方法调用
@@ -25,13 +36,19 @@ public:
                                 const Glib::ustring& interfaceName,
                                 const Glib::ustring& methodName,
                                 const Glib::VariantContainerBase& args,
-                                const Glib::RefPtr<Gio::DBus::MethodInvocation>& invocation);
+                                const Glib::RefPtr<Gio::DBus::MethodInvocation>& invocation)
+    {
+        const auto var = Glib::Variant<Glib::ustring>::create(Glib::ustring::compose("hello world %1 times", ++n));
+        Glib::VariantContainerBase response = Glib::VariantContainerBase::create_tuple(var);
+        invocation->return_value(response);
+    }
 
 private:
     Rasp::DBus::Service     m_service{"org.planc.raspd.Hello"};
     Rasp::DBus::Object      m_object{"/org/planc/raspd/Hello"};
     Rasp::DBus::Interface   m_interface{"org.planc.raspd.Hello"};
 
+    // 方法名为hello, 调用this->hello函数, 参数为空, 返回值为 (String ret)
     RASP_WARP_METHOD("hello", hello, {}, {{"ret", "s"}});
 
     int n = 0;

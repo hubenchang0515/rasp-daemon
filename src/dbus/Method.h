@@ -24,7 +24,7 @@
                               args,               \
                               invocation          \
 
-#define RASP_WARP_NAME(func) __method_##func
+#define RASP_WARP_NAME(func) __resp_dbus_method_##func
 #define RASP_WARP_METHOD(name, func, ...) Rasp::DBus::Method RASP_WARP_NAME(func){name, [this](RASP_LAMBDA_FUN_ARGS){func(RASP_LAMBDA_PASS_ARGS);}, ##__VA_ARGS__}
 
 namespace Rasp

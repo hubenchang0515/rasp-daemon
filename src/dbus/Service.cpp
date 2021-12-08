@@ -81,7 +81,13 @@ guint Service::registerService(Service* service, Gio::DBus::BusType type)
             return 0;
         }
     }
-    
+
+    auto iter = Service::services.find(service->m_name);
+    if (iter != services.end())
+    {
+        fprintf(stderr, "conflicting service name '%s'\n", service->m_name.c_str());
+        return 0;
+    }
     
     for (auto& obj : service->m_objects)
     {

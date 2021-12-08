@@ -1,5 +1,5 @@
 #include <cstdio>
-#include "hello/Hello.h"
+#include "hello/Hello.hpp"
 
 void hello(const Glib::RefPtr<Gio::DBus::Connection>& connection,
             const Glib::ustring& sender,
