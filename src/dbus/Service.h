@@ -1,78 +1,84 @@
-#ifndef DBUS_SERVICE_H
-#define DBUS_SERVICE_H
+#ifndef RASP_DBUS_SERVICE_H
+#define RASP_DBUS_SERVICE_H
 
 #include <map>
 
 #include <giomm.h>
 #include <glibmm.h>
 
-class DBusService
+#include "Object.h"
+
+namespace Rasp
+{
+
+namespace DBus
+{
+
+
+class Service
 {
 public:
-    using Method = void (DBusService::*)(const Glib::RefPtr<Gio::DBus::Connection>& connection,
-                                const Glib::ustring& sender,
-                                const Glib::ustring& objectPath,
-                                const Glib::ustring& interfaceName,
-                                const Glib::ustring& methodName,
-                                const Glib::VariantContainerBase& args,
-                                const Glib::RefPtr<Gio::DBus::MethodInvocation>& invocation);
-
-    DBusService();
-    virtual ~DBusService() = default;
-
-    virtual Glib::ustring XML() = 0;
-    virtual Glib::ustring path() = 0;
-    virtual Glib::ustring name() = 0;
+    Service(const Glib::ustring& name);
+    ~Service() = default;
 
     /*****************************************************************************
-     * @brief 注册对象
+     * @brief 返回服务名
+     * @return 服务名
+     * ***************************************************************************/
+    Glib::ustring name() const noexcept;
+
+    /*****************************************************************************
+     * @brief 导出对象
      * @param[in] obj 对象
+     * @return 是否成功
+     * ***************************************************************************/
+    bool exportObject(const Object& obj) noexcept;
+
+    /*****************************************************************************
+     * @brief 删除对象
+     * @param[in] path 对象路径
+     * @return 是否成功
+     * ***************************************************************************/
+    bool unexportObject(const Glib::ustring& path) noexcept;
+
+    /*****************************************************************************
+     * @brief 注册服务
+     * @param[in] service 服务
      * @param[in] type 总线类型
      * @return id
      * ***************************************************************************/
-    static guint reg(DBusService* obj, Gio::DBus::BusType type=Gio::DBus::BusType::BUS_TYPE_SESSION);
+    static guint registerService(Service* service, Gio::DBus::BusType type=Gio::DBus::BusType::BUS_TYPE_SESSION);
 
     /*****************************************************************************
-     * @brief 反注册对象
+     * @brief 注销服务
      * @param[in] name 名字
      * @param[in] del 是否同时删除对象
      * @return 是否成功 
      * ***************************************************************************/
-    static bool unreg(const Glib::ustring& name, bool del=false);
+    static bool unregisterService(const Glib::ustring& name, bool del=false);
 
     /*****************************************************************************
-     * @brief 反注册对象
+     * @brief 注销服务
      * @param[in] obj 对象
      * @param[in] del 是否同时删除对象
      * @return 是否成功 
      * ***************************************************************************/
-    static bool unreg(DBusService* obj, bool del=false);
-
-    /*****************************************************************************
-     * @brief 注册方法
-     * @param[in] name 方法名
-     * @param[in] del 是否同时删除对象
-     * @return 是否成功 
-     * ***************************************************************************/
-    bool addMethod(Glib::ustring name, DBusService::Method fn);
-
-    template<typename T>
-    bool addMethod(Glib::ustring name, T fn)
-    {
-        auto m = static_cast<Method>(fn);
-        return addMethod(name, m);
-    }
+    static bool unregisterService(Service* service, bool del=false);
 
 
 private:
-    guint m_dbusNameId;
-    guint m_dbusObjectId;
+    Glib::ustring m_name;
     Gio::DBus::InterfaceVTable m_vtable; // DBus 虚表
+    guint m_ownerId;
 
-    std::map<Glib::ustring, DBusService::Method> m_methods; // 方法函数表
+    std::map<Glib::ustring, Object> m_objects;
+    std::map<Glib::ustring, guint>  m_objIds;
 
-    /* 对象表 */
-    static std::map<Glib::ustring, DBusService*> objs;
+    /* 服务名 => 服务 */
+    static std::map<Glib::ustring, Service*> services;
+
+    /* 对象路径 => 所属服务 */
+    static std::map<Glib::ustring, Service*> objServices;
 
     /*****************************************************************************
      * @brief 回调函数，DBus 获得总线
@@ -117,4 +123,9 @@ private:
                                 const Glib::RefPtr<Gio::DBus::MethodInvocation>& invocation);
 };
 
-#endif // DBUS_SERVICE_H
+}; // namespace DBus
+
+}; // namespace Rasp
+
+
+#endif // RASP_DBUS_SERVICE_H

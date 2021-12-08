@@ -19,8 +19,8 @@ link_directories (${GTKMM_LIBRARY_DIRS})
 
 
 # 基础核心部分源码
-include_directories (./src/core)
-aux_source_directory( ./src/core CORE_SRC)
+include_directories (./src/dbus)
+aux_source_directory( ./src/dbus DBUS_SRC)
 
 # session进程及其模块
 aux_source_directory( ./src/session SESSION_SRC)
@@ -28,9 +28,10 @@ aux_source_directory( ./src/session/hello HELLO_SRC)
 
 # 编译目标
 add_executable( ${PROJECT_NAME}-session 
-                ${CORE_SRC}
+                ${DBUS_SRC}
                 ${SESSION_SRC}
-                ${HELLO_SRC})
+                ${HELLO_SRC}
+                )
 
 # 链接参数
 target_link_libraries (${PROJECT_NAME}-session 

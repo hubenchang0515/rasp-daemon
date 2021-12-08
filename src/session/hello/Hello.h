@@ -1,19 +1,13 @@
-#ifndef RASPD_HELLO_H
-#define RASPD_HELLO_H
+#ifndef RASPD_SESSION_HELLO_H
+#define RASPD_SESSION_HELLO_H
 
-#include "DBusService.h"
+#include "Service.h"
 
-namespace Raspd
-{
-
-class Hello : public DBusService
+class Hello
 {
 public:
     Hello();
     ~Hello();
-    virtual Glib::ustring XML() override;
-    virtual Glib::ustring path() override;
-    virtual Glib::ustring name() override;
 
     /*****************************************************************************
      * @brief 回调函数，DBus 方法调用
@@ -25,15 +19,22 @@ public:
      * @param[in] args 参数
      * @param[in] invocation 
      * ***************************************************************************/
-    void methodHello(const Glib::RefPtr<Gio::DBus::Connection>& connection,
+    void hello(const Glib::RefPtr<Gio::DBus::Connection>& connection,
                                 const Glib::ustring& sender,
                                 const Glib::ustring& objectPath,
                                 const Glib::ustring& interfaceName,
                                 const Glib::ustring& methodName,
                                 const Glib::VariantContainerBase& args,
                                 const Glib::RefPtr<Gio::DBus::MethodInvocation>& invocation);
+
+private:
+    Rasp::DBus::Service     m_service{"org.planc.raspd.Hello"};
+    Rasp::DBus::Object      m_object{"/org/planc/raspd/Hello"};
+    Rasp::DBus::Interface   m_interface{"org.planc.raspd.Hello"};
+
+    WARP_METHOD("hello", hello, {}, {{"ret", "s"}});
+
+    int n = 0;
 };
 
-}; // namespace Raspd
-
-#endif // RASP_HELLO_H
+#endif // RASP_SESSION_HELLO_H
