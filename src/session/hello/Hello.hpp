@@ -38,7 +38,9 @@ public:
                                 const Glib::VariantContainerBase& args,
                                 const Glib::RefPtr<Gio::DBus::MethodInvocation>& invocation)
     {
-        const auto var = Glib::Variant<Glib::ustring>::create(Glib::ustring::compose("hello world %1 times", ++n));
+        Glib::Variant<Glib::ustring> name;
+        args.get_child(name, 0);
+        const auto var = Glib::Variant<Glib::ustring>::create(Glib::ustring::compose("hello %1", name.get()));
         Glib::VariantContainerBase response = Glib::VariantContainerBase::create_tuple(var);
         invocation->return_value(response);
     }
@@ -48,8 +50,8 @@ private:
     Rasp::DBus::Object      m_object{"/org/planc/raspd/Hello"};
     Rasp::DBus::Interface   m_interface{"org.planc.raspd.Hello"};
 
-    // 方法名为hello, 调用this->hello函数, 参数为空, 返回值为 (String ret)
-    RASP_WARP_METHOD("hello", hello, {}, {{"ret", "s"}});
+    // 方法名为hello, 调用this->hello函数, 参数为(String name), 返回值为 (String ret)
+    RASP_WARP_METHOD("hello", hello, {{"name", "s"}}, {{"ret", "s"}});
 
     int n = 0;
 };

@@ -43,7 +43,7 @@ Glib::ustring Method::XML() const noexcept
 
     for (auto& in : m_inArgs)
     {
-        xml += Glib::ustring::compose("      <arg type='%1' name='%2' direction='int'/>\n", in.second, in.first);
+        xml += Glib::ustring::compose("      <arg type='%1' name='%2' direction='in'/>\n", in.second, in.first);
     }
 
     for (auto& out : m_outArgs)
