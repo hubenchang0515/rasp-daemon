@@ -2,7 +2,7 @@
 
 Hello::Hello()
 {
-    m_interface.exportMethod(WARP_NAME(hello));
+    m_interface.exportMethod(RASP_WARP_NAME(hello));
     m_object.exportInterface(m_interface);
     m_service.exportObject(m_object);
 

@@ -32,7 +32,7 @@ private:
     Rasp::DBus::Object      m_object{"/org/planc/raspd/Hello"};
     Rasp::DBus::Interface   m_interface{"org.planc.raspd.Hello"};
 
-    WARP_METHOD("hello", hello, {}, {{"ret", "s"}});
+    RASP_WARP_METHOD("hello", hello, {}, {{"ret", "s"}});
 
     int n = 0;
 };

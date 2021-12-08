@@ -8,24 +8,24 @@
 #include <giomm.h>
 #include <glibmm.h>
 
-#define LAMBDA_FUN_ARGS const Glib::RefPtr<Gio::DBus::Connection>& connection,          \
-                        const Glib::ustring& sender,                                    \
-                        const Glib::ustring& objectPath,                                \
-                        const Glib::ustring& interfaceName,                             \
-                        const Glib::ustring& methodName,                                \
-                        const Glib::VariantContainerBase& args,                         \
-                        const Glib::RefPtr<Gio::DBus::MethodInvocation>& invocation     \
+#define RASP_LAMBDA_FUN_ARGS const Glib::RefPtr<Gio::DBus::Connection>& connection,          \
+                             const Glib::ustring& sender,                                    \
+                             const Glib::ustring& objectPath,                                \
+                             const Glib::ustring& interfaceName,                             \
+                             const Glib::ustring& methodName,                                \
+                             const Glib::VariantContainerBase& args,                         \
+                             const Glib::RefPtr<Gio::DBus::MethodInvocation>& invocation     \
 
-#define LAMBDA_PASS_ARGS connection,         \
-                         sender,             \
-                         objectPath,         \
-                         interfaceName,      \
-                         methodName,         \
-                         args,               \
-                         invocation          \
+#define RASP_LAMBDA_PASS_ARGS connection,         \
+                              sender,             \
+                              objectPath,         \
+                              interfaceName,      \
+                              methodName,         \
+                              args,               \
+                              invocation          \
 
-#define WARP_NAME(func) __method_##func
-#define WARP_METHOD(name, func, ...) Rasp::DBus::Method WARP_NAME(func){name, [this](LAMBDA_FUN_ARGS){func(LAMBDA_PASS_ARGS);}, ##__VA_ARGS__}
+#define RASP_WARP_NAME(func) __method_##func
+#define RASP_WARP_METHOD(name, func, ...) Rasp::DBus::Method RASP_WARP_NAME(func){name, [this](RASP_LAMBDA_FUN_ARGS){func(RASP_LAMBDA_PASS_ARGS);}, ##__VA_ARGS__}
 
 namespace Rasp
 {
