@@ -8,23 +8,23 @@
 #include <giomm.h>
 #include <glibmm.h>
 
-#define RASP_LAMBDA_FUN_ARGS const Glib::RefPtr<Gio::DBus::Connection>& connection,          \
-                             const Glib::ustring& sender,                                    \
-                             const Glib::ustring& objectPath,                                \
-                             const Glib::ustring& interfaceName,                             \
-                             const Glib::ustring& methodName,                                \
-                             const Glib::VariantContainerBase& args,                         \
-                             const Glib::RefPtr<Gio::DBus::MethodInvocation>& invocation     \
+#define RASP_LAMBDA_METHOD_ARGS1 const Glib::RefPtr<Gio::DBus::Connection>& connection,          \
+                                 const Glib::ustring& sender,                                    \
+                                 const Glib::ustring& objectPath,                                \
+                                 const Glib::ustring& interfaceName,                             \
+                                 const Glib::ustring& methodName,                                \
+                                 const Glib::VariantContainerBase& args,                         \
+                                 const Glib::RefPtr<Gio::DBus::MethodInvocation>& invocation     \
 
-#define RASP_LAMBDA_PASS_ARGS connection,         \
-                              sender,             \
-                              objectPath,         \
-                              interfaceName,      \
-                              methodName,         \
-                              args,               \
-                              invocation          \
+#define RASP_LAMBDA_METHOD_ARGS2 connection,         \
+                                 sender,             \
+                                 objectPath,         \
+                                 interfaceName,      \
+                                 methodName,         \
+                                 args,               \
+                                 invocation          \
 
-#define RASP_WARP_METHOD(func) [this](RASP_LAMBDA_FUN_ARGS){func(RASP_LAMBDA_PASS_ARGS);}
+#define RASP_WARP_METHOD(func) [this](RASP_LAMBDA_METHOD_ARGS1){func(RASP_LAMBDA_METHOD_ARGS2);}
 
 namespace Rasp
 {

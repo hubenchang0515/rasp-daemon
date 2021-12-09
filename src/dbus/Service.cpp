@@ -15,7 +15,7 @@ std::map<Glib::ustring, Glib::RefPtr<Service>> Service::objServices;
 Service::Service(const Glib::ustring& name, Gio::DBus::BusType type):
     m_name(name),
     m_type(type),
-    m_vtable{RASP_WARP_METHOD(onMethodCall)},
+    m_vtable{RASP_WARP_METHOD(onMethodCall), RASP_WARP_GET(onGetProperty), RASP_WARP_SET(onSetProperty)},
     m_ownerId(0),
     m_registered(false)
 {
@@ -257,6 +257,54 @@ void Service::onMethodCall(const Glib::RefPtr<Gio::DBus::Connection>& connection
     }
     auto obj = iter->second;
     obj->onMethodCall(connection, sender, objectPath, interfaceName, methodName, args, invocation);
+}
+
+/*****************************************************************************
+ * @brief 回调函数，DBus 属性读取
+ * @param[in] property 属性
+ * @param[in] connection 连接
+ * @param[in] sender 发送方
+ * @param[in] objectPath 对象路径
+ * @param[in] interfaceName 接口名
+ * @param[in] propertyName 属性名
+ * ***************************************************************************/
+void Service::onGetProperty(Glib::VariantBase& property,
+                                const Glib::RefPtr<Gio::DBus::Connection>& connection,
+                                const Glib::ustring& sender,
+                                const Glib::ustring& objectPath,
+                                const Glib::ustring& interfaceName,
+                                const Glib::ustring& propertyName)
+{
+    auto iter = m_objects.find(objectPath);
+    if (iter != m_objects.end())
+    {
+        iter->second->onGetProperty(property, connection, sender, objectPath, interfaceName, propertyName);
+    }
+}
+
+/*****************************************************************************
+ * @brief 回调函数，DBus 属性读取
+ * @param[in] connection 连接
+ * @param[in] sender 发送方
+ * @param[in] objectPath 对象路径
+ * @param[in] interfaceName 接口名
+ * @param[in] propertyName 属性名
+ * @param[in] value 属性值
+ * ***************************************************************************/
+bool Service::onSetProperty(const Glib::RefPtr<Gio::DBus::Connection>& connection,
+                                const Glib::ustring& sender,
+                                const Glib::ustring& objectPath,
+                                const Glib::ustring& interfaceName,
+                                const Glib::ustring& propertyName,
+                                const Glib::VariantBase& value)
+{
+    auto iter = m_objects.find(objectPath);
+    if (iter != m_objects.end())
+    {
+        return iter->second->onSetProperty(connection, sender, objectPath, interfaceName, propertyName, value);
+    }
+
+    return false;
 }
 
 }; // namespace DBus

@@ -123,6 +123,55 @@ void Object::onMethodCall(const Glib::RefPtr<Gio::DBus::Connection>& connection,
     iter->second->onMethodCall(connection, sender, objectPath, interfaceName, methodName, args, invocation);
 }
 
+
+/*****************************************************************************
+ * @brief 回调函数，DBus 属性读取
+ * @param[in] property 属性
+ * @param[in] connection 连接
+ * @param[in] sender 发送方
+ * @param[in] objectPath 对象路径
+ * @param[in] interfaceName 接口名
+ * @param[in] propertyName 属性名
+ * ***************************************************************************/
+void Object::onGetProperty(Glib::VariantBase& property,
+                                const Glib::RefPtr<Gio::DBus::Connection>& connection,
+                                const Glib::ustring& sender,
+                                const Glib::ustring& objectPath,
+                                const Glib::ustring& interfaceName,
+                                const Glib::ustring& propertyName)
+{
+    auto iter = m_interfaces.find(interfaceName);
+    if (iter != m_interfaces.end())
+    {
+        iter->second->onGetProperty(property, connection, sender, objectPath, interfaceName, propertyName);
+    }
+}
+
+/*****************************************************************************
+ * @brief 回调函数，DBus 属性读取
+ * @param[in] connection 连接
+ * @param[in] sender 发送方
+ * @param[in] objectPath 对象路径
+ * @param[in] interfaceName 接口名
+ * @param[in] propertyName 属性名
+ * @param[in] value 属性值
+ * ***************************************************************************/
+bool Object::onSetProperty(const Glib::RefPtr<Gio::DBus::Connection>& connection,
+                                const Glib::ustring& sender,
+                                const Glib::ustring& objectPath,
+                                const Glib::ustring& interfaceName,
+                                const Glib::ustring& propertyName,
+                                const Glib::VariantBase& value)
+{
+    auto iter = m_interfaces.find(interfaceName);
+    if (iter != m_interfaces.end())
+    {
+        return iter->second->onSetProperty(connection, sender, objectPath, interfaceName, propertyName, value);
+    }
+
+    return false;
+}
+
 }; // namespace DBus
 
 }; // namespace Rasp

@@ -34,6 +34,10 @@ Glib::ustring Interface::XML() const noexcept
     {
         xml += m.second->XML();
     }
+    for (auto& p : m_properties)
+    {
+        xml += p.second->XML();
+    }
     xml += "  </interface>\n</node>\n";
 
     return xml;
@@ -88,6 +92,42 @@ bool Interface::unexportMethod(const Glib::ustring& name) noexcept
 }
 
 /*****************************************************************************
+ * @brief 导出属性
+ * @param[in] property 属性
+ * @return 是否成功 
+ * ***************************************************************************/
+bool Interface::exportProperty(const Glib::RefPtr<Property>& property) noexcept
+{
+    auto iter = m_properties.find(property->name());
+    if (iter == m_properties.end())
+    {
+        m_properties[property->name()] = property;
+        update();
+        return true;
+    }
+
+    return false;
+}
+
+/*****************************************************************************
+ * @brief 删除属性
+ * @param[in] name 属性名
+ * @return 是否成功 
+ * ***************************************************************************/
+bool Interface::unexportProperty(const Glib::ustring& name) noexcept
+{
+    auto iter = m_properties.find(name);
+    if (iter != m_properties.end())
+    {
+        m_properties.erase(iter);
+        update();
+        return true;
+    }
+
+    return false;
+}
+
+/*****************************************************************************
  * @brief 回调函数，DBus 方法调用
  * @param[in] connection DBus连接
  * @param[in] sender 发送方
@@ -114,6 +154,54 @@ void Interface::onMethodCall(const Glib::RefPtr<Gio::DBus::Connection>& connecti
     }
 
     iter->second->onMethodCall(connection, sender, objectPath, interfaceName, methodName, args, invocation);
+}
+
+/*****************************************************************************
+ * @brief 回调函数，DBus 属性读取
+ * @param[in] property 属性
+ * @param[in] connection 连接
+ * @param[in] sender 发送方
+ * @param[in] objectPath 对象路径
+ * @param[in] interfaceName 接口名
+ * @param[in] propertyName 属性名
+ * ***************************************************************************/
+void Interface::onGetProperty(Glib::VariantBase& property,
+                                const Glib::RefPtr<Gio::DBus::Connection>& connection,
+                                const Glib::ustring& sender,
+                                const Glib::ustring& objectPath,
+                                const Glib::ustring& interfaceName,
+                                const Glib::ustring& propertyName)
+{
+    auto iter = m_properties.find(propertyName);
+    if (iter != m_properties.end())
+    {
+        iter->second->onGetProperty(property, connection, sender, objectPath, interfaceName, propertyName);
+    }
+}
+
+/*****************************************************************************
+ * @brief 回调函数，DBus 属性读取
+ * @param[in] connection 连接
+ * @param[in] sender 发送方
+ * @param[in] objectPath 对象路径
+ * @param[in] interfaceName 接口名
+ * @param[in] propertyName 属性名
+ * @param[in] value 属性值
+ * ***************************************************************************/
+bool Interface::onSetProperty(const Glib::RefPtr<Gio::DBus::Connection>& connection,
+                                const Glib::ustring& sender,
+                                const Glib::ustring& objectPath,
+                                const Glib::ustring& interfaceName,
+                                const Glib::ustring& propertyName,
+                                const Glib::VariantBase& value)
+{
+    auto iter = m_properties.find(propertyName);
+    if (iter != m_properties.end())
+    {
+        return iter->second->onSetProperty(connection, sender, objectPath, interfaceName, propertyName, value);
+    }
+
+    return false;
 }
 
 }; // namespace DBus
