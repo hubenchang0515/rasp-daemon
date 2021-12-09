@@ -57,6 +57,12 @@ guint Object::update()
  * ***************************************************************************/
 bool Object::exportInterface(const Glib::RefPtr<Interface>& interface) noexcept
 {
+    if (interface->m_parent != nullptr)
+    {
+        fprintf(stderr, "%s already have a parent\n", interface->name().c_str());
+        return false;
+    }
+
     auto iter = m_interfaces.find(interface->name());
     if (iter == m_interfaces.end())
     {

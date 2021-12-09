@@ -38,6 +38,12 @@ Glib::ustring Service::name() const noexcept
  * ***************************************************************************/
 bool Service::exportObject(const Glib::RefPtr<Rasp::DBus::Object>& obj) noexcept
 {
+    if (obj->m_parent != nullptr)
+    {
+        fprintf(stderr, "%s already have a parent\n", obj->path().c_str());
+        return false;
+    }
+    
     auto iter = m_objects.find(obj->path());
     if (iter == m_objects.end())
     {
