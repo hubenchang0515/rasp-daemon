@@ -31,7 +31,7 @@ Glib::ustring Object::XML() const noexcept
     Glib::ustring xml = "<node>\n";
     for (auto& i : m_interfaces)
     {
-        xml += i.second.XML();
+        xml += i.second->XML();
     }
     xml += "</node>";
     return xml;
@@ -42,12 +42,12 @@ Glib::ustring Object::XML() const noexcept
  * @param[in] service 服务
  * @return id
  * ***************************************************************************/
-bool Object::exportInterface(const Interface& interface) noexcept
+bool Object::exportInterface(const Glib::RefPtr<Interface>& interface) noexcept
 {
-    auto iter = m_interfaces.find(interface.name());
+    auto iter = m_interfaces.find(interface->name());
     if (iter == m_interfaces.end())
     {
-        m_interfaces.emplace(interface.name(), interface);
+        m_interfaces[interface->name()] = interface;
         return true;
     }
 
@@ -97,7 +97,7 @@ void Object::onMethodCall(const Glib::RefPtr<Gio::DBus::Connection>& connection,
         return;
     }
 
-    iter->second.onMethodCall(connection, sender, objectPath, interfaceName, methodName, args, invocation);
+    iter->second->onMethodCall(connection, sender, objectPath, interfaceName, methodName, args, invocation);
 }
 
 }; // namespace DBus

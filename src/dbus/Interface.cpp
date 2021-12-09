@@ -30,7 +30,7 @@ Glib::ustring Interface::XML() const noexcept
     Glib::ustring xml = Glib::ustring::compose("  <interface name='%1'>\n", m_name);
     for (auto& m : m_methods)
     {
-        xml += m.second.XML();
+        xml += m.second->XML();
     }
     xml += "  </interface>\n";
 
@@ -42,12 +42,12 @@ Glib::ustring Interface::XML() const noexcept
  * @param[in] method 方法
  * @return 是否成功 
  * ***************************************************************************/
-bool Interface::exportMethod(const Method& method) noexcept
+bool Interface::exportMethod(const Glib::RefPtr<Method>& method) noexcept
 {
-    auto iter = m_methods.find(method.name());
+    auto iter = m_methods.find(method->name());
     if (iter == m_methods.end())
     {
-        m_methods.emplace(method.name(), method);
+        m_methods[method->name()] = method;
         return true;
     }
 
@@ -97,7 +97,7 @@ void Interface::onMethodCall(const Glib::RefPtr<Gio::DBus::Connection>& connecti
         return;
     }
 
-    iter->second.onMethodCall(connection, sender, objectPath, interfaceName, methodName, args, invocation);
+    iter->second->onMethodCall(connection, sender, objectPath, interfaceName, methodName, args, invocation);
 }
 
 }; // namespace DBus

@@ -6,18 +6,22 @@
 class Hello
 {
 public:
-    Hello()
+    Hello():
+        m_service(new Rasp::DBus::Service{"org.planc.raspd.Hello"}),
+        m_object(new Rasp::DBus::Object("/org/planc/raspd/Hello")),
+        m_interface(new Rasp::DBus::Interface("org.planc.raspd.Hello")),
+        m_methodHello(new Rasp::DBus::Method("SayHello", RASP_WARP_METHOD(hello), {{"name", "s"}}, {{"ret", "s"}}))
     {
-        m_interface.exportMethod(RASP_WARP_NAME(hello));
-        m_object.exportInterface(m_interface);
-        m_service.exportObject(m_object);
+        m_interface->exportMethod(m_methodHello);
+        m_object->exportInterface(m_interface);
+        m_service->exportObject(m_object);
 
-        Rasp::DBus::Service::registerService(&m_service);
+        Rasp::DBus::Service::registerService(m_service);
     }
 
     ~Hello()
     {
-        Rasp::DBus::Service::unregisterService(&m_service);
+        Rasp::DBus::Service::unregisterService(m_service->name());
     }
 
     /*****************************************************************************
@@ -46,14 +50,12 @@ public:
     }
 
 private:
-    Rasp::DBus::Service     m_service{"org.planc.raspd.Hello"};
-    Rasp::DBus::Object      m_object{"/org/planc/raspd/Hello"};
-    Rasp::DBus::Interface   m_interface{"org.planc.raspd.Hello"};
+    Glib::RefPtr<Rasp::DBus::Service>     m_service;
+    Glib::RefPtr<Rasp::DBus::Object>      m_object;
+    Glib::RefPtr<Rasp::DBus::Interface>   m_interface;
 
     // 方法名为hello, 调用this->hello函数, 参数为(String name), 返回值为 (String ret)
-    RASP_WARP_METHOD("hello", hello, {{"name", "s"}}, {{"ret", "s"}});
-
-    int n = 0;
+    Glib::RefPtr<Rasp::DBus::Method> m_methodHello;
 };
 
 #endif // RASP_SESSION_HELLO_H

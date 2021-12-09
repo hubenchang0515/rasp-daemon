@@ -16,11 +16,11 @@ namespace DBus
 
 class Service;
 
-class Object
+class Object : public Glib::Object
 {
     friend Service;
 public:
-    Object(const Glib::ustring& path) noexcept;
+    explicit Object(const Glib::ustring& path) noexcept;
 
     /*****************************************************************************
      * @brief 返回对象路径
@@ -39,7 +39,7 @@ public:
      * @param[in] service 服务
      * @return id
      * ***************************************************************************/
-    bool exportInterface(const Interface& interface) noexcept;
+    bool exportInterface(const Glib::RefPtr<Interface>& interface) noexcept;
 
     /*****************************************************************************
      * @brief 删除接口
@@ -69,7 +69,7 @@ protected:
 
 private:
     Glib::ustring m_path;
-    std::map<Glib::ustring, Interface> m_interfaces;
+    std::map<Glib::ustring, Glib::RefPtr<Interface>> m_interfaces;
 }; // Object
 
 }; // namespace DBus

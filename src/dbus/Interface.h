@@ -16,11 +16,11 @@ namespace DBus
 
 class Object;
 
-class Interface
+class Interface : public Glib::Object
 {
-    friend Object;
+    friend Rasp::DBus::Object;
 public:
-    Interface(const Glib::ustring& name) noexcept;
+    explicit Interface(const Glib::ustring& name) noexcept;
 
     /*****************************************************************************
      * @brief 返回接口名
@@ -39,7 +39,7 @@ public:
      * @param[in] method 方法
      * @return 是否成功 
      * ***************************************************************************/
-    bool exportMethod(const Method& method) noexcept;
+    bool exportMethod(const Glib::RefPtr<Method>& method) noexcept;
 
     /*****************************************************************************
      * @brief 删除方法
@@ -69,7 +69,7 @@ protected:
     
 private:
     Glib::ustring m_name;
-    std::map<Glib::ustring, Method> m_methods; // 方法函数表
+    std::map<Glib::ustring, Glib::RefPtr<Method>> m_methods; // 方法函数表
 
 }; // class Interface
 

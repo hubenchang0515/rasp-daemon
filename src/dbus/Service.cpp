@@ -7,14 +7,14 @@ namespace DBus
 {
 
 /* 服务名 => 服务 */
-std::map<Glib::ustring, Service*> Service::services;
+std::map<Glib::ustring, Glib::RefPtr<Service>> Service::services;
 
 /* 对象路径 => 所属服务 */
-std::map<Glib::ustring, Service*> Service::objServices;
+std::map<Glib::ustring, Glib::RefPtr<Service>> Service::objServices;
 
 Service::Service(const Glib::ustring& name):
     m_name(name),
-    m_vtable{sigc::ptr_fun(&onMethodCall)},
+    m_vtable{RASP_WARP_METHOD(onMethodCall)},
     m_ownerId(0)
 {
 
@@ -34,12 +34,12 @@ Glib::ustring Service::name() const noexcept
  * @param[in] obj 对象
  * @return 是否成功
  * ***************************************************************************/
-bool Service::exportObject(const Object& obj) noexcept
+bool Service::exportObject(const Glib::RefPtr<Rasp::DBus::Object>& obj) noexcept
 {
-    auto iter = m_objects.find(obj.path());
+    auto iter = m_objects.find(obj->path());
     if (iter == m_objects.end())
     {
-        m_objects.emplace(obj.path(), obj);
+        m_objects[obj->path()] = obj;
         return true;
     }
 
@@ -70,7 +70,7 @@ bool Service::unexportObject(const Glib::ustring& path) noexcept
  * @param[in] type 总线类型
  * @return 注册id
  * ***************************************************************************/
-guint Service::registerService(Service* service, Gio::DBus::BusType type)
+guint Service::registerService(const Glib::RefPtr<Service>& service, Gio::DBus::BusType type)
 {
     for (auto& obj : service->m_objects)
     {
@@ -91,9 +91,9 @@ guint Service::registerService(Service* service, Gio::DBus::BusType type)
     
     for (auto& obj : service->m_objects)
     {
-        Service::objServices.emplace(obj.first, service);
+        Service::objServices[obj.first] = service;
     }
-    Service::services.emplace(service->m_name, service);
+    Service::services[service->m_name] = service;
 
     service->m_ownerId = Gio::DBus::own_name(type, 
                                     service->m_name,
@@ -106,37 +106,13 @@ guint Service::registerService(Service* service, Gio::DBus::BusType type)
 }
 
 /*****************************************************************************
- * @brief 注销服务
+ * @brief 删除服务
  * @param[in] name 名字
- * @param[in] del 是否同时删除对象
  * @return 是否成功 
  * ***************************************************************************/
-bool Service::unregisterService(const Glib::ustring& name, bool del)
+bool Service::unregisterService(const Glib::ustring& name)
 {
     // TODO: 删除服务
-    return true;
-}
-
-/*****************************************************************************
- * @brief 注销服务
- * @param[in] service 服务对象
- * @param[in] del 是否同时删除对象
- * @return 是否成功 
- * ***************************************************************************/
-bool Service::unregisterService(Service* service, bool del)
-{
-    auto name = service->name(); 
-    auto iter = services.find(name);
-    if (iter == services.end())
-    {
-        fprintf(stderr, "unknown service name '%s'\n", name.c_str());
-        return false;
-    }
-
-    Gio::DBus::unown_name(service->m_ownerId);
-    services.erase(name);
-    if (del)
-        delete service;
     return true;
 }
 
@@ -156,8 +132,8 @@ void Service::onBusAcquired(const Glib::RefPtr<Gio::DBus::Connection>& connectio
         {
             auto name = iter.first;
             auto obj = iter.second;
-            auto introspectionData = Gio::DBus::NodeInfo::create_for_xml(obj.XML());
-            service->m_objIds[name] = connection->register_object(obj.path(), 
+            auto introspectionData = Gio::DBus::NodeInfo::create_for_xml(obj->XML());
+            service->m_objIds[name] = connection->register_object(obj->path(), 
                                         introspectionData->lookup_interface(), 
                                         service->m_vtable);
         }
@@ -219,17 +195,15 @@ void Service::onMethodCall(const Glib::RefPtr<Gio::DBus::Connection>& connection
                             const Glib::VariantContainerBase& args,
                             const Glib::RefPtr<Gio::DBus::MethodInvocation>& invocation)
 {
-    auto iter = Service::objServices.find(objectPath);
-    if (iter == Service::objServices.end())
+    auto iter = m_objects.find(objectPath);
+    if (iter == m_objects.end())
     {
         Gio::DBus::Error e{Gio::DBus::Error::UNKNOWN_OBJECT, objectPath};
         invocation->return_error(e);
         return;
     }
-
-    auto service = iter->second;
-    auto obj = service->m_objects.at(objectPath);
-    obj.onMethodCall(connection, sender, objectPath, interfaceName, methodName, args, invocation);
+    auto obj = iter->second;
+    obj->onMethodCall(connection, sender, objectPath, interfaceName, methodName, args, invocation);
 }
 
 }; // namespace DBus

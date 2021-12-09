@@ -24,8 +24,7 @@
                               args,               \
                               invocation          \
 
-#define RASP_WARP_NAME(func) __resp_dbus_method_##func
-#define RASP_WARP_METHOD(name, func, ...) Rasp::DBus::Method RASP_WARP_NAME(func){name, [this](RASP_LAMBDA_FUN_ARGS){func(RASP_LAMBDA_PASS_ARGS);}, ##__VA_ARGS__}
+#define RASP_WARP_METHOD(func) [this](RASP_LAMBDA_FUN_ARGS){func(RASP_LAMBDA_PASS_ARGS);}
 
 namespace Rasp
 {
@@ -35,7 +34,7 @@ namespace DBus
 
 class Interface;
 
-class Method
+class Method : public Glib::Object
 {
     friend Interface;
 public:
@@ -55,9 +54,9 @@ public:
      * @param [in] inArgs 输入参数列表，是参数名映射到类型字符串的map
      * @param [in] outArgs 返回值列表，是参数名映射到类型字符串的map
      * ***************************************************************************/
-    Method(const Glib::ustring& name, const Callback& fn, 
-            const std::map<Glib::ustring, Glib::ustring>& inArgs={}, 
-            const std::map<Glib::ustring, Glib::ustring>& outArgs={}) noexcept;
+    explicit Method(const Glib::ustring& name, const Callback& fn, 
+                    const std::map<Glib::ustring, Glib::ustring>& inArgs={}, 
+                    const std::map<Glib::ustring, Glib::ustring>& outArgs={}) noexcept;
 
     /*****************************************************************************
      * @brief 返回方法名
