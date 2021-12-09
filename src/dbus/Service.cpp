@@ -175,10 +175,14 @@ void Service::onBusAcquired(const Glib::RefPtr<Gio::DBus::Connection>& connectio
         {
             auto name = iter.first;
             auto obj = iter.second;
-            auto introspectionData = Gio::DBus::NodeInfo::create_for_xml(obj->XML());
-            service->m_objIds[name] = connection->register_object(obj->path(), 
-                                        introspectionData->lookup_interface(), 
-                                        service->m_vtable);
+
+            for (auto iter2 : obj->m_interfaces)
+            {
+                auto introspectionData = Gio::DBus::NodeInfo::create_for_xml(iter2.second->XML());
+                service->m_objIds[name] = connection->register_object(obj->path(), 
+                                            introspectionData->lookup_interface(), 
+                                            service->m_vtable);
+            }
         }
     }
     catch (const std::exception& err)

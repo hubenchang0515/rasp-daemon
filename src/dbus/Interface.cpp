@@ -29,12 +29,12 @@ Glib::ustring Interface::name() const noexcept
  * ***************************************************************************/
 Glib::ustring Interface::XML() const noexcept
 {
-    Glib::ustring xml = Glib::ustring::compose("  <interface name='%1'>\n", m_name);
+    Glib::ustring xml = Glib::ustring::compose("<node>\n  <interface name='%1'>\n", m_name);
     for (auto& m : m_methods)
     {
         xml += m.second->XML();
     }
-    xml += "  </interface>\n";
+    xml += "  </interface>\n</node>\n";
 
     return xml;
 }
@@ -61,8 +61,8 @@ bool Interface::exportMethod(const Glib::RefPtr<Method>& method) noexcept
     auto iter = m_methods.find(method->name());
     if (iter == m_methods.end())
     {
-        method->m_parent = this;
         m_methods[method->name()] = method;
+        update();
         return true;
     }
 
@@ -79,9 +79,8 @@ bool Interface::unexportMethod(const Glib::ustring& name) noexcept
     auto iter = m_methods.find(name);
     if (iter != m_methods.end())
     {
-        iter->second->m_parent = nullptr;
         m_methods.erase(iter);
-        m_parent->update();
+        update();
         return true;
     }
 

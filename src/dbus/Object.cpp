@@ -30,12 +30,11 @@ Glib::ustring Object::path() const noexcept
  * ***************************************************************************/
 Glib::ustring Object::XML() const noexcept
 {
-    Glib::ustring xml = "<node>\n";
+    Glib::ustring xml;
     for (auto& i : m_interfaces)
     {
         xml += i.second->XML();
     }
-    xml += "</node>";
     return xml;
 }
 
