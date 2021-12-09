@@ -70,6 +70,12 @@ public:
      * ***************************************************************************/
     Glib::ustring XML() const noexcept;
 
+    /*****************************************************************************
+     * @brief 刷新所属服务
+     * @return id
+     * ***************************************************************************/
+    guint update();
+
 protected:
     /*****************************************************************************
      * @brief 触发回调函数，DBus 方法调用
@@ -96,6 +102,9 @@ private:
     // 参数名 => 类型字符串
     std::map<Glib::ustring, Glib::ustring> m_inArgs;
     std::map<Glib::ustring, Glib::ustring> m_outArgs;
+
+protected:
+    Rasp::DBus::Interface* m_parent;
 };
 
 }; // RASP_DBUS_METHOD_H

@@ -35,6 +35,12 @@ public:
     Glib::ustring XML() const noexcept;
 
     /*****************************************************************************
+     * @brief 刷新所属服务
+     * @return id
+     * ***************************************************************************/
+    guint update();
+
+    /*****************************************************************************
      * @brief 导出方法
      * @param[in] method 方法
      * @return 是否成功 
@@ -70,6 +76,9 @@ protected:
 private:
     Glib::ustring m_name;
     std::map<Glib::ustring, Glib::RefPtr<Method>> m_methods; // 方法函数表
+
+protected:
+    Rasp::DBus::Object* m_parent;
 
 }; // class Interface
 

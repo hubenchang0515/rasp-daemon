@@ -12,10 +12,12 @@ std::map<Glib::ustring, Glib::RefPtr<Service>> Service::services;
 /* 对象路径 => 所属服务 */
 std::map<Glib::ustring, Glib::RefPtr<Service>> Service::objServices;
 
-Service::Service(const Glib::ustring& name):
+Service::Service(const Glib::ustring& name, Gio::DBus::BusType type):
     m_name(name),
+    m_type(type),
     m_vtable{RASP_WARP_METHOD(onMethodCall)},
-    m_ownerId(0)
+    m_ownerId(0),
+    m_registered(false)
 {
 
 }
@@ -39,7 +41,9 @@ bool Service::exportObject(const Glib::RefPtr<Rasp::DBus::Object>& obj) noexcept
     auto iter = m_objects.find(obj->path());
     if (iter == m_objects.end())
     {
+        obj->m_parent = this;
         m_objects[obj->path()] = obj;
+        update();
         return true;
     }
 
@@ -56,11 +60,41 @@ bool Service::unexportObject(const Glib::ustring& path) noexcept
     auto iter = m_objects.find(path);
     if (iter != m_objects.end())
     {
+        iter->second->m_parent = nullptr;
         m_objects.erase(iter);
+        update();
         return true;
     }
 
     return false;
+}
+
+/*****************************************************************************
+ * @brief 刷新服务，在服务中增删对象、接口、方法、属性、信号时，需要调用这个函数进行更新
+ *        并且，只有调用 registerService 注册过的服务才会更新，
+ *        调用了 unregisterService 的服务则只会被删除
+ * @param[in] service 服务
+ * @return id
+ * ***************************************************************************/
+guint Service::update()
+{
+    if (m_ownerId != 0)
+    {
+        Gio::DBus::unown_name(m_ownerId);
+        m_ownerId = 0;
+    }
+
+    if (m_registered)
+    {
+        m_ownerId = Gio::DBus::own_name(m_type, 
+                                        m_name,
+                                        sigc::ptr_fun(&onBusAcquired), 
+                                        sigc::ptr_fun(&onNameAcquired),
+                                        sigc::ptr_fun(&onNameLost));
+
+        return m_ownerId;
+    }
+    return 0;
 }
 
 
@@ -70,8 +104,15 @@ bool Service::unexportObject(const Glib::ustring& path) noexcept
  * @param[in] type 总线类型
  * @return 注册id
  * ***************************************************************************/
-guint Service::registerService(const Glib::RefPtr<Service>& service, Gio::DBus::BusType type)
+guint Service::registerService(const Glib::RefPtr<Service>& service)
 {
+    auto iter = Service::services.find(service->m_name);
+    if (iter != services.end())
+    {
+        fprintf(stderr, "conflicting service name '%s'\n", service->m_name.c_str());
+        return 0;
+    }
+
     for (auto& obj : service->m_objects)
     {
         auto path = obj.first;
@@ -81,13 +122,6 @@ guint Service::registerService(const Glib::RefPtr<Service>& service, Gio::DBus::
             return 0;
         }
     }
-
-    auto iter = Service::services.find(service->m_name);
-    if (iter != services.end())
-    {
-        fprintf(stderr, "conflicting service name '%s'\n", service->m_name.c_str());
-        return 0;
-    }
     
     for (auto& obj : service->m_objects)
     {
@@ -95,14 +129,8 @@ guint Service::registerService(const Glib::RefPtr<Service>& service, Gio::DBus::
     }
     Service::services[service->m_name] = service;
 
-    service->m_ownerId = Gio::DBus::own_name(type, 
-                                    service->m_name,
-                                    sigc::ptr_fun(&onBusAcquired), 
-                                    sigc::ptr_fun(&onNameAcquired),
-                                    sigc::ptr_fun(&onNameLost));
-    
-
-    return service->m_ownerId;
+    service->m_registered = true;
+    return service->update();
 }
 
 /*****************************************************************************
@@ -112,7 +140,22 @@ guint Service::registerService(const Glib::RefPtr<Service>& service, Gio::DBus::
  * ***************************************************************************/
 bool Service::unregisterService(const Glib::ustring& name)
 {
-    // TODO: 删除服务
+    auto iter = Service::services.find(name);
+    if (iter == Service::services.end())
+    {
+        return false;
+    }
+
+    auto service = iter->second;
+    Service::services.erase(iter);
+
+    for (auto& obj : service->m_objects)
+    {
+        Service::objServices.erase(obj.first);
+    }
+
+    service->m_registered = false;
+    service->update();
     return true;
 }
 

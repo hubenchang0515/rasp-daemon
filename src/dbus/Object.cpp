@@ -1,4 +1,5 @@
 #include "Object.h"
+#include "Service.h"
 
 namespace Rasp
 {
@@ -8,7 +9,8 @@ namespace DBus
 
 
 Object::Object(const Glib::ustring& path) noexcept:
-    m_path(path)
+    m_path(path),
+    m_parent(nullptr)
 {
 
 }
@@ -38,6 +40,18 @@ Glib::ustring Object::XML() const noexcept
 }
 
 /*****************************************************************************
+ * @brief 刷新所属服务
+ * @return id
+ * ***************************************************************************/
+guint Object::update()
+{
+    if (m_parent != nullptr)
+        return m_parent->update();
+
+    return 0;
+}
+
+/*****************************************************************************
  * @brief 导出接口
  * @param[in] service 服务
  * @return id
@@ -47,7 +61,9 @@ bool Object::exportInterface(const Glib::RefPtr<Interface>& interface) noexcept
     auto iter = m_interfaces.find(interface->name());
     if (iter == m_interfaces.end())
     {
+        interface->m_parent = this;
         m_interfaces[interface->name()] = interface;
+        update();
         return true;
     }
 
@@ -64,7 +80,9 @@ bool Object::unexportInterface(const Glib::ustring& name) noexcept
     auto iter = m_interfaces.find(name);
     if (iter != m_interfaces.end())
     {
+        iter->second->m_parent = nullptr;
         m_interfaces.erase(iter);
+        update();
         return true;
     }
 

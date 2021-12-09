@@ -12,11 +12,17 @@ public:
         m_interface(new Rasp::DBus::Interface("org.planc.raspd.Hello")),
         m_methodHello(new Rasp::DBus::Method("SayHello", RASP_WARP_METHOD(hello), {{"name", "s"}}, {{"ret", "s"}}))
     {
+        Rasp::DBus::Service::registerService(m_service);
         m_interface->exportMethod(m_methodHello);
         m_object->exportInterface(m_interface);
         m_service->exportObject(m_object);
 
-        Rasp::DBus::Service::registerService(m_service);
+        // Rasp::DBus::Service::registerService(m_service);
+        // m_interface->unexportMethod(m_methodHello->name());
+        // m_object->unexportInterface(m_interface->name());
+        // Rasp::DBus::Service::unregisterService(m_service->name());
+        // m_service->unexportObject(m_object->path());
+        // m_service->update();
     }
 
     ~Hello()

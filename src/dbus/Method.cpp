@@ -1,4 +1,5 @@
 #include "Method.h"
+#include "Interface.h"
 
 namespace Rasp
 {
@@ -19,7 +20,8 @@ Method::Method(const Glib::ustring& name, const Callback& fn,
     m_name(name),
     m_callback(fn),
     m_inArgs(inArgs),
-    m_outArgs(outArgs)
+    m_outArgs(outArgs),
+    m_parent(nullptr)
 {
 
 }
@@ -54,6 +56,18 @@ Glib::ustring Method::XML() const noexcept
     xml += "    </method>\n";
     
     return xml;
+}
+
+/*****************************************************************************
+ * @brief 刷新所属服务
+ * @return id
+ * ***************************************************************************/
+guint Method::update()
+{
+    if (m_parent != nullptr)
+        return m_parent->update();
+
+    return 0;
 }
 
 /*****************************************************************************

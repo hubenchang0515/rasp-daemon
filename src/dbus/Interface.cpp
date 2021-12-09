@@ -1,4 +1,5 @@
 #include "Interface.h"
+#include "Object.h"
 
 namespace Rasp
 {
@@ -7,7 +8,8 @@ namespace DBus
 {
 
 Interface::Interface(const Glib::ustring& name) noexcept :
-    m_name(name)
+    m_name(name),
+    m_parent(nullptr)
 {
 
 }
@@ -38,6 +40,18 @@ Glib::ustring Interface::XML() const noexcept
 }
 
 /*****************************************************************************
+ * @brief 刷新所属服务
+ * @return id
+ * ***************************************************************************/
+guint Interface::update()
+{
+    if (m_parent != nullptr)
+        return m_parent->update();
+
+    return 0;
+}
+
+/*****************************************************************************
  * @brief 导出方法
  * @param[in] method 方法
  * @return 是否成功 
@@ -47,6 +61,7 @@ bool Interface::exportMethod(const Glib::RefPtr<Method>& method) noexcept
     auto iter = m_methods.find(method->name());
     if (iter == m_methods.end())
     {
+        method->m_parent = this;
         m_methods[method->name()] = method;
         return true;
     }
@@ -64,7 +79,9 @@ bool Interface::unexportMethod(const Glib::ustring& name) noexcept
     auto iter = m_methods.find(name);
     if (iter != m_methods.end())
     {
+        iter->second->m_parent = nullptr;
         m_methods.erase(iter);
+        m_parent->update();
         return true;
     }
 

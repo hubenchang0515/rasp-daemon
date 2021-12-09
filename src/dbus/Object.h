@@ -35,6 +35,12 @@ public:
     Glib::ustring XML() const noexcept;
 
     /*****************************************************************************
+     * @brief 刷新所属服务
+     * @return id
+     * ***************************************************************************/
+    guint update();
+
+    /*****************************************************************************
      * @brief 导出接口
      * @param[in] service 服务
      * @return id
@@ -70,6 +76,9 @@ protected:
 private:
     Glib::ustring m_path;
     std::map<Glib::ustring, Glib::RefPtr<Interface>> m_interfaces;
+
+protected:
+    Service* m_parent;
 }; // Object
 
 }; // namespace DBus
