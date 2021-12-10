@@ -8,24 +8,6 @@
 #include <giomm.h>
 #include <glibmm.h>
 
-#define RASP_LAMBDA_METHOD_ARGS1 const Glib::RefPtr<Gio::DBus::Connection>& connection,          \
-                                 const Glib::ustring& sender,                                    \
-                                 const Glib::ustring& objectPath,                                \
-                                 const Glib::ustring& interfaceName,                             \
-                                 const Glib::ustring& methodName,                                \
-                                 const Glib::VariantContainerBase& args,                         \
-                                 const Glib::RefPtr<Gio::DBus::MethodInvocation>& invocation     \
-
-#define RASP_LAMBDA_METHOD_ARGS2 connection,         \
-                                 sender,             \
-                                 objectPath,         \
-                                 interfaceName,      \
-                                 methodName,         \
-                                 args,               \
-                                 invocation          \
-
-#define RASP_WARP_METHOD(func) [this](RASP_LAMBDA_METHOD_ARGS1){func(RASP_LAMBDA_METHOD_ARGS2);}
-
 namespace Rasp
 {
 
@@ -46,6 +28,37 @@ public:
                                         const Glib::ustring& methodName,
                                         const Glib::VariantContainerBase& args,
                                         const Glib::RefPtr<Gio::DBus::MethodInvocation>& invocation)>;
+
+    using SimpleCallback = std::function<void(const Glib::VariantContainerBase& args,
+                                                const Glib::RefPtr<Gio::DBus::MethodInvocation>& invocation)>;
+
+    /* 完整方法的成员函数指针类型 */    
+    template<class C>
+    using Func = void(C::*)(const Glib::RefPtr<Gio::DBus::Connection>& connection,
+                            const Glib::ustring& sender,
+                            const Glib::ustring& objectPath,
+                            const Glib::ustring& interfaceName,
+                            const Glib::ustring& methodName,
+                            const Glib::VariantContainerBase& args,
+                            const Glib::RefPtr<Gio::DBus::MethodInvocation>& invocation);
+
+    using GFunc = void(*)(const Glib::RefPtr<Gio::DBus::Connection>& connection,
+                            const Glib::ustring& sender,
+                            const Glib::ustring& objectPath,
+                            const Glib::ustring& interfaceName,
+                            const Glib::ustring& methodName,
+                            const Glib::VariantContainerBase& args,
+                            const Glib::RefPtr<Gio::DBus::MethodInvocation>& invocation);
+    // template<class C, typename... T>
+    // using Func = void(C::*)(T...);
+
+    /* 简单方法的成员函数指针类型 */    
+    template<class C>
+    using SimpleFunc = void(C::*)(const Glib::VariantContainerBase& args,
+                                    const Glib::RefPtr<Gio::DBus::MethodInvocation>& invocation);
+
+    using SimpleGFunc = void(*)(const Glib::VariantContainerBase& args,
+                                    const Glib::RefPtr<Gio::DBus::MethodInvocation>& invocation);
 
     /*****************************************************************************
      * @brief 构造一个 DBus 方法
@@ -69,6 +82,87 @@ public:
      * @return xml
      * ***************************************************************************/
     Glib::ustring XML() const noexcept;
+
+    /*****************************************************************************
+     * @brief 封装完整参数的成员函数
+     * @param[in] self 对象指针
+     * @param[in] fn 成员函数
+     * @return 封装后的方法函数
+     * ***************************************************************************/
+    template<class C>
+    static Callback warp(C* self, Func<C> fn) noexcept
+    {
+        return [self, fn](const Glib::RefPtr<Gio::DBus::Connection>& connection,
+                            const Glib::ustring& sender,
+                            const Glib::ustring& objectPath,
+                            const Glib::ustring& interfaceName,
+                            const Glib::ustring& methodName,
+                            const Glib::VariantContainerBase& args,
+                            const Glib::RefPtr<Gio::DBus::MethodInvocation>& invocation)
+        {
+            (self->*fn)(connection, sender, objectPath, interfaceName, methodName, args, invocation);
+        };
+    }
+
+    /*****************************************************************************
+     * @brief 封装完整参数的普通函数
+     * @param[in] fn 普通函数
+     * @return 封装后的方法函数
+     * ***************************************************************************/
+    static Callback warp(GFunc fn) noexcept
+    {
+        return [fn](const Glib::RefPtr<Gio::DBus::Connection>& connection,
+                            const Glib::ustring& sender,
+                            const Glib::ustring& objectPath,
+                            const Glib::ustring& interfaceName,
+                            const Glib::ustring& methodName,
+                            const Glib::VariantContainerBase& args,
+                            const Glib::RefPtr<Gio::DBus::MethodInvocation>& invocation)
+        {
+            (*fn)(connection, sender, objectPath, interfaceName, methodName, args, invocation);
+        };
+    }
+
+    /*****************************************************************************
+     * @brief 封装简化参数的成员函数
+     * @param[in] self 对象指针
+     * @param[in] fn 成员函数
+     * @return 封装后的方法函数
+     * ***************************************************************************/
+    template<class C>
+    static Callback warp(C* self, SimpleFunc<C> fn) noexcept
+    {
+        return [self, fn](const Glib::RefPtr<Gio::DBus::Connection>& connection,
+                            const Glib::ustring& sender,
+                            const Glib::ustring& objectPath,
+                            const Glib::ustring& interfaceName,
+                            const Glib::ustring& methodName,
+                            const Glib::VariantContainerBase& args,
+                            const Glib::RefPtr<Gio::DBus::MethodInvocation>& invocation)
+        {
+            (self->*fn)(args, invocation);
+        };
+    }
+
+    /*****************************************************************************
+     * @brief 封装简化参数的普通函数
+     * @param[in] fn 普通函数
+     * @return 封装后的方法函数
+     * ***************************************************************************/
+    static Callback warp(SimpleGFunc fn) noexcept
+    {
+        return [fn](const Glib::RefPtr<Gio::DBus::Connection>& connection,
+                            const Glib::ustring& sender,
+                            const Glib::ustring& objectPath,
+                            const Glib::ustring& interfaceName,
+                            const Glib::ustring& methodName,
+                            const Glib::VariantContainerBase& args,
+                            const Glib::RefPtr<Gio::DBus::MethodInvocation>& invocation)
+        {
+            (*fn)(args, invocation);
+        };
+    }
+
 
 protected:
     /*****************************************************************************

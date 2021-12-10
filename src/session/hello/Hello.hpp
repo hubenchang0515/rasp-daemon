@@ -11,7 +11,7 @@ public:
         m_object(new Rasp::DBus::Object("/org/planc/raspd/Hello")),
         m_interface1(new Rasp::DBus::Interface("org.planc.raspd.Hello1")),
         m_interface2(new Rasp::DBus::Interface("org.planc.raspd.Hello2")),
-        m_methodHello(new Rasp::DBus::Method("SayHello", RASP_WARP_METHOD(hello), {{"name", "s"}}, {{"ret", "s"}})),
+        m_methodHello(new Rasp::DBus::Method("SayHello", Rasp::DBus::Method::warp(this, &Hello::hello), {{"name", "s"}}, {{"ret", "s"}})),
         m_propertyName(new Rasp::DBus::Property("name", "s", RASP_WARP_GET(getName), RASP_WARP_SET(setName)))
     {
         Rasp::DBus::Service::registerService(m_service);
@@ -42,18 +42,13 @@ protected:
      * @param[in] args 参数
      * @param[in] invocation 
      * ***************************************************************************/
-    void hello(const Glib::RefPtr<Gio::DBus::Connection>& connection,
-                                const Glib::ustring& sender,
-                                const Glib::ustring& objectPath,
-                                const Glib::ustring& interfaceName,
-                                const Glib::ustring& methodName,
-                                const Glib::VariantContainerBase& args,
-                                const Glib::RefPtr<Gio::DBus::MethodInvocation>& invocation)
+    void hello(const Glib::VariantContainerBase& args,
+                const Glib::RefPtr<Gio::DBus::MethodInvocation>& invocation)
     {
         Glib::Variant<Glib::ustring> name;
         args.get_child(name, 0);
         m_name = name.get();
-        const auto var = Glib::Variant<Glib::ustring>::create(Glib::ustring::compose("hello %1", m_name));
+        const auto var = Glib::Variant<Glib::ustring>::create(Glib::ustring::compose("hello %1", name.get()));
         Glib::VariantContainerBase response = Glib::VariantContainerBase::create_tuple(var);
         invocation->return_value(response);
     }

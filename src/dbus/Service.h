@@ -72,7 +72,7 @@ private:
     bool m_registered;
 
     std::map<Glib::ustring, Glib::RefPtr<Rasp::DBus::Object>> m_objects;
-    std::map<Glib::ustring, guint>  m_objIds;
+    std::map<Glib::ustring, std::vector<guint>>  m_objIds;
 
     /*****************************************************************************
      * @brief 回调函数，DBus 方法调用

@@ -15,7 +15,7 @@ std::map<Glib::ustring, Glib::RefPtr<Service>> Service::objServices;
 Service::Service(const Glib::ustring& name, Gio::DBus::BusType type):
     m_name(name),
     m_type(type),
-    m_vtable{RASP_WARP_METHOD(onMethodCall), RASP_WARP_GET(onGetProperty), RASP_WARP_SET(onSetProperty)},
+    m_vtable{Method::warp(this, &Service::onMethodCall), RASP_WARP_GET(onGetProperty), RASP_WARP_SET(onSetProperty)},
     m_ownerId(0),
     m_registered(false)
 {
@@ -168,7 +168,7 @@ bool Service::unregisterService(const Glib::ustring& name)
 /*****************************************************************************
  * @brief 回调函数，DBus 获得总线
  * @param[in] connection DBus连接
- * @param[in] name 名字
+ * @param[in] name 服务名
  * ***************************************************************************/
 void Service::onBusAcquired(const Glib::RefPtr<Gio::DBus::Connection>& connection,
                             const Glib::ustring& name)
@@ -185,9 +185,9 @@ void Service::onBusAcquired(const Glib::RefPtr<Gio::DBus::Connection>& connectio
             for (auto iter2 : obj->m_interfaces)
             {
                 auto introspectionData = Gio::DBus::NodeInfo::create_for_xml(iter2.second->XML());
-                service->m_objIds[name] = connection->register_object(obj->path(), 
-                                            introspectionData->lookup_interface(), 
-                                            service->m_vtable);
+                service->m_objIds[name].emplace_back (connection->register_object(obj->path(), 
+                                                        introspectionData->lookup_interface(), 
+                                                        service->m_vtable));
             }
         }
     }
@@ -219,9 +219,9 @@ void Service::onNameLost(const Glib::RefPtr<Gio::DBus::Connection>& connection,
     try
     {
         auto service = Service::services.at(name);
-        for (auto iter : service->m_objIds)
+        for (auto id : service->m_objIds[name])
         {
-            connection->unregister_object(iter.second);
+            connection->unregister_object(id);
         }
     }
     catch (const std::exception& err)
