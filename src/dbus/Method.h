@@ -42,6 +42,7 @@ public:
                             const Glib::VariantContainerBase& args,
                             const Glib::RefPtr<Gio::DBus::MethodInvocation>& invocation);
 
+    /* 完整方法的普通函数指针类型 */  
     using GFunc = void(*)(const Glib::RefPtr<Gio::DBus::Connection>& connection,
                             const Glib::ustring& sender,
                             const Glib::ustring& objectPath,
@@ -49,14 +50,13 @@ public:
                             const Glib::ustring& methodName,
                             const Glib::VariantContainerBase& args,
                             const Glib::RefPtr<Gio::DBus::MethodInvocation>& invocation);
-    // template<class C, typename... T>
-    // using Func = void(C::*)(T...);
 
     /* 简单方法的成员函数指针类型 */    
     template<class C>
     using SimpleFunc = void(C::*)(const Glib::VariantContainerBase& args,
                                     const Glib::RefPtr<Gio::DBus::MethodInvocation>& invocation);
 
+    /* 简单方法的普通函数指针类型 */  
     using SimpleGFunc = void(*)(const Glib::VariantContainerBase& args,
                                     const Glib::RefPtr<Gio::DBus::MethodInvocation>& invocation);
 
