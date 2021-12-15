@@ -15,7 +15,7 @@ std::map<Glib::ustring, Glib::RefPtr<Service>> Service::objServices;
 Service::Service(const Glib::ustring& name, Gio::DBus::BusType type):
     m_name(name),
     m_type(type),
-    m_vtable{Method::warp(this, &Service::onMethodCall), RASP_WARP_GET(onGetProperty), RASP_WARP_SET(onSetProperty)},
+    m_vtable{Method::warp(this, &Service::onMethodCall), Property::warp(this, &Service::onGetProperty), Property::warp(this, &Service::onSetProperty)},
     m_ownerId(0),
     m_registered(false)
 {

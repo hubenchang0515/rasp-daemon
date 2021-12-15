@@ -12,7 +12,7 @@ public:
         m_interface1(new Rasp::DBus::Interface("org.planc.raspd.Hello1")),
         m_interface2(new Rasp::DBus::Interface("org.planc.raspd.Hello2")),
         m_methodHello(new Rasp::DBus::Method("SayHello", Rasp::DBus::Method::warp(this, &Hello::hello), {{"name", "s"}}, {{"ret", "s"}})),
-        m_propertyName(new Rasp::DBus::Property("name", "s", RASP_WARP_GET(getName), RASP_WARP_SET(setName)))
+        m_propertyName(new Rasp::DBus::Property("name", "s", Rasp::DBus::Property::warp(this, &Hello::getName), Rasp::DBus::Property::warp(this, &Hello::setName)))
     {
         Rasp::DBus::Service::registerService(m_service);
         m_interface1->exportMethod(m_methodHello);

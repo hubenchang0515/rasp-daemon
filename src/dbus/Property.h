@@ -6,38 +6,6 @@
 #include <giomm.h>
 #include <glibmm.h>
 
-#define RASP_LAMBDA_GET_ARGS1 Glib::VariantBase& property,                              \
-                              const Glib::RefPtr<Gio::DBus::Connection>& connection,    \
-                              const Glib::ustring& sender,                              \
-                              const Glib::ustring& objectPath,                          \
-                              const Glib::ustring& interfaceName,                       \
-                              const Glib::ustring& propertyName                         \
-
-#define RASP_LAMBDA_GET_ARGS2 property,         \
-                              connection,       \
-                              sender,           \
-                              objectPath,       \
-                              interfaceName,    \
-                              propertyName      \
-
-#define RASP_LAMBDA_SET_ARGS1 const Glib::RefPtr<Gio::DBus::Connection>& connection,  \
-                              const Glib::ustring& sender,                            \
-                              const Glib::ustring& objectPath,                        \
-                              const Glib::ustring& interfaceName,                     \
-                              const Glib::ustring& propertyName,                      \
-                              const Glib::VariantBase& property                       \
-                              
-
-#define RASP_LAMBDA_SET_ARGS2 connection,       \
-                              sender,           \
-                              objectPath,       \
-                              interfaceName,    \
-                              propertyName,     \
-                              property          \
-
-#define RASP_WARP_GET(func) [this](RASP_LAMBDA_GET_ARGS1){func(RASP_LAMBDA_GET_ARGS2);}
-#define RASP_WARP_SET(func) [this](RASP_LAMBDA_SET_ARGS1){return func(RASP_LAMBDA_SET_ARGS2);}
-
 namespace Rasp
 {
 
@@ -50,21 +18,57 @@ class Property : public Glib::Object
 {
     friend Interface;
 public:
-    // 回调函数类型
-    using CallBackGet = std::function<void(Glib::VariantBase& property,
+    // Get回调函数类型
+    using CallbackGet = std::function<void(Glib::VariantBase& property,
                                             const Glib::RefPtr<Gio::DBus::Connection>& connection,
                                             const Glib::ustring& sender,
                                             const Glib::ustring& objectPath,
                                             const Glib::ustring& interfaceName,
                                             const Glib::ustring& propertyName)>;
 
-        // 回调函数类型
-    using CallBackSet = std::function<bool(const Glib::RefPtr<Gio::DBus::Connection>& connection,
+    // Set回调函数类型
+    using CallbackSet = std::function<bool(const Glib::RefPtr<Gio::DBus::Connection>& connection,
                                             const Glib::ustring& sender,
                                             const Glib::ustring& objectPath,
                                             const Glib::ustring& interfaceName,
                                             const Glib::ustring& propertyName,
                                             const Glib::VariantBase& value)>;
+
+    // 完整参数的成员函数指针类型
+    template<class C>
+    using MethodFuncGet = void(C::*)(Glib::VariantBase& property,
+                                        const Glib::RefPtr<Gio::DBus::Connection>& connection,
+                                        const Glib::ustring& sender,
+                                        const Glib::ustring& objectPath,
+                                        const Glib::ustring& interfaceName,
+                                        const Glib::ustring& propertyName);
+
+    template<class C>
+    using MethodFuncSet = bool(C::*)(const Glib::RefPtr<Gio::DBus::Connection>& connection,
+                                        const Glib::ustring& sender,
+                                        const Glib::ustring& objectPath,
+                                        const Glib::ustring& interfaceName,
+                                        const Glib::ustring& propertyName,
+                                        const Glib::VariantBase& value);
+
+    // 完整参数的普通函数类型
+    using PlainFuncGet = CallbackGet;
+    using PlainFuncSet = CallbackSet;
+
+    // 简化参数的成员函数指针类型
+    template<class C>
+    using SimpleMethodFuncGet = void(C::*)(Glib::VariantBase& property,
+                                            const Glib::ustring& propertyName);
+
+    template<class C>
+    using SimpleMethodFuncSet = bool(C::*)(const Glib::ustring& propertyName,
+                                            const Glib::VariantBase& value);
+
+    // 简化参数的普通函数类型
+    using SimplePlainFuncGet = std::function<void(Glib::VariantBase& property,
+                                                    const Glib::ustring& propertyName)>;
+    using SimplePlainFuncSet = std::function<void(const Glib::ustring& propertyName,
+                                                    const Glib::VariantBase& value)>;
 
     /*****************************************************************************
      * @brief 构造一个 DBus 属性
@@ -74,7 +78,7 @@ public:
      * @param[in] setFn set的回调函数
      * ***************************************************************************/
     explicit Property(const Glib::ustring& name, const Glib::ustring& type,
-                         const CallBackGet& getFn=nullptr, const CallBackSet& setFn=nullptr);
+                         const CallbackGet& getFn=nullptr, const CallbackSet& setFn=nullptr);
 
     /*****************************************************************************
      * @brief 返回属性名
@@ -94,11 +98,152 @@ public:
      * ***************************************************************************/
     Glib::ustring XML() const noexcept;
 
+    /*****************************************************************************
+     * @brief 封装完整参数的成员函数作为Get
+     * @param[in] self 对象指针
+     * @param[in] fn 成员函数
+     * @return 封装后的属性Get函数
+     * ***************************************************************************/
+    template<class C>
+    static CallbackGet warp(C* self,const MethodFuncGet<C>& fn) noexcept
+    {
+        return [self, fn](Glib::VariantBase& property,
+                            const Glib::RefPtr<Gio::DBus::Connection>& connection,
+                            const Glib::ustring& sender,
+                            const Glib::ustring& objectPath,
+                            const Glib::ustring& interfaceName,
+                            const Glib::ustring& propertyName)
+        {
+            return (self->*fn)(property, connection, sender, objectPath, interfaceName, propertyName);
+        };
+    }
+
+    /*****************************************************************************
+     * @brief 封装完整参数的成员函数作为Set
+     * @param[in] self 对象指针
+     * @param[in] fn 成员函数
+     * @return 封装后的属性Set函数
+     * ***************************************************************************/
+    template<class C>
+    static CallbackSet warp(C* self,const MethodFuncSet<C>& fn) noexcept
+    {
+        return [self, fn](const Glib::RefPtr<Gio::DBus::Connection>& connection,
+                            const Glib::ustring& sender,
+                            const Glib::ustring& objectPath,
+                            const Glib::ustring& interfaceName,
+                            const Glib::ustring& propertyName,
+                            const Glib::VariantBase& value)
+        {
+            return (self->*fn)(connection, sender, objectPath, interfaceName, propertyName, value);
+        };
+    }
+
+    /*****************************************************************************
+     * @brief 封装完整参数的普通函数作为Get
+     * @param[in] fn 函数
+     * @return 封装后的属性Get函数
+     * ***************************************************************************/
+    template<class C>
+    static CallbackGet warp(const PlainFuncGet& fn) noexcept
+    {
+        return fn;
+    }
+
+    /*****************************************************************************
+     * @brief 封装完整参数的普通函数作为Set
+     * @param[in] fn 函数
+     * @return 封装后的属性Set函数
+     * ***************************************************************************/
+    template<class C>
+    static CallbackSet warp(const PlainFuncSet& fn) noexcept
+    {
+        return fn;
+    }
+
+    /*****************************************************************************
+     * @brief 封装简化参数的成员函数作为Get
+     * @param[in] self 对象指针
+     * @param[in] fn 成员函数
+     * @return 封装后的属性Get函数
+     * ***************************************************************************/
+    template<class C>
+    static CallbackGet warp(C* self,const SimpleMethodFuncGet<C>& fn) noexcept
+    {
+        return [self, fn](Glib::VariantBase& property,
+                            const Glib::RefPtr<Gio::DBus::Connection>& connection,
+                            const Glib::ustring& sender,
+                            const Glib::ustring& objectPath,
+                            const Glib::ustring& interfaceName,
+                            const Glib::ustring& propertyName)
+        {
+            printf("%s -> %s\n", self, fn);
+            // return (self->*fn)(property, propertyName);
+        };
+    }
+
+    /*****************************************************************************
+     * @brief 封装简化参数的成员函数作为Set
+     * @param[in] self 对象指针
+     * @param[in] fn 成员函数
+     * @return 封装后的属性Get函数
+     * ***************************************************************************/
+    template<class C>
+    static CallbackGet warp(C* self,const SimpleMethodFuncSet<C>& fn) noexcept
+    {
+        return [self, fn](const Glib::RefPtr<Gio::DBus::Connection>& connection,
+                            const Glib::ustring& sender,
+                            const Glib::ustring& objectPath,
+                            const Glib::ustring& interfaceName,
+                            const Glib::ustring& propertyName,
+                            const Glib::VariantBase& value)
+        {
+            return (self->*fn)(propertyName, value);
+        };
+    }
+
+    /*****************************************************************************
+     * @brief 封装简化参数的普通函数作为Get
+     * @param[in] fn 函数
+     * @return 封装后的属性Get函数
+     * ***************************************************************************/
+    template<class C>
+    static CallbackGet warp(const SimplePlainFuncGet& fn) noexcept
+    {
+        return [fn](Glib::VariantBase& property,
+                            const Glib::RefPtr<Gio::DBus::Connection>& connection,
+                            const Glib::ustring& sender,
+                            const Glib::ustring& objectPath,
+                            const Glib::ustring& interfaceName,
+                            const Glib::ustring& propertyName)
+        {
+            return fn(property, propertyName);
+        };
+    }
+
+    /*****************************************************************************
+     * @brief 封装简化参数的普通函数作为Set
+     * @param[in] fn 函数
+     * @return 封装后的属性Set函数
+     * ***************************************************************************/
+    template<class C>
+    static CallbackSet warp(const SimplePlainFuncSet& fn) noexcept
+    {
+        return [fn](const Glib::RefPtr<Gio::DBus::Connection>& connection,
+                            const Glib::ustring& sender,
+                            const Glib::ustring& objectPath,
+                            const Glib::ustring& interfaceName,
+                            const Glib::ustring& propertyName,
+                            const Glib::VariantBase& value)
+        {
+            return fn(propertyName, value);
+        };
+    }
+
 private:
     Glib::ustring m_name;
     Glib::ustring m_type;
-    CallBackGet m_get;
-    CallBackSet m_set;
+    CallbackGet m_get;
+    CallbackSet m_set;
 
     /*****************************************************************************
      * @brief 回调函数，DBus 属性读取

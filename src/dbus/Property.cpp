@@ -14,7 +14,7 @@ namespace DBus
  * @param [in] setFn set的回调函数
  * ***************************************************************************/
 Property::Property(const Glib::ustring& name, const Glib::ustring& type,
-                        const CallBackGet& getFn, const CallBackSet& setFn):
+                        const CallbackGet& getFn, const CallbackSet& setFn):
     m_name(name),
     m_type(type),
     m_get(getFn),
