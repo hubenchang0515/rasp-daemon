@@ -1,16 +1,16 @@
-Source: rasptool
+Source: rasp-daemon
 Section: unknown
 Priority: optional
 Maintainer: PlanC <hubenchang0515@outlook.com>
 Build-Depends: 
+  cmake, 
   debhelper (>=11~),
   libglibmm-2.4-dev,
   libgtkmm-2.4-dev,
-
 Standards-Version: 4.1.4
 Homepage: <insert the upstream URL, if relevant>
 
-Package: rasptool
+Package: rasp-daemon
 Architecture: any
 Multi-Arch: foreign
 Depends: ${misc:Depends}, ${shlibs:Depends}

@@ -40,3 +40,11 @@ CMakeCache.txt
 # bin
 raspd-session
 raspd-system
+
+# debian
+*.deb
+debian/.debhelper
+debian/rasp-daemon
+debian/debhelper-build-stamp
+debian/files
+debian/rasp-daemon.substvars
