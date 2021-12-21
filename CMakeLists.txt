@@ -36,3 +36,6 @@ add_executable( ${PROJECT_NAME}-session
 target_link_libraries (${PROJECT_NAME}-session 
                         ${GLIBMM_LIBRARIES} 
                         ${GTKMM_LIBRARIES})
+
+# 安装
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-session DESTINATION bin)

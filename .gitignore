@@ -43,6 +43,7 @@ raspd-system
 
 # debian
 *.deb
+obj-x86_64-linux-gnu
 debian/.debhelper
 debian/rasp-daemon
 debian/debhelper-build-stamp

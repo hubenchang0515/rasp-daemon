@@ -14,17 +14,10 @@ daemon of rasptool - rasptool的后端守护进程
 
 ## Build deb package / 构建 deb 包
 
-Get the build dependencies / 获取构建依赖
+Get the build dependencies / 安装构建依赖
 
 ```
-$ mk-build-deps
-```
-
-Install the build dependencies / 安装构建依赖
-
-```
-$ sudo dpkg -i rasp-daemon-build-deps_1.0_all.deb
-$ sudo apt install --fix-broken
+$ sudo mk-build-deps --install
 ```
 
 Build the deb package / 构建 deb 包
